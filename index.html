@@ -89,17 +89,93 @@
 
   img{max-width:100%; display:block;}
 
-  /* ---------- OPENING ---------- */
+  /* ---------- OPENING & 3D DOORS ---------- */
   #opening{
     position:fixed; inset:0; z-index:40;
     max-width:480px; margin:0 auto;
     background:#100603;
+    overflow:hidden;
+    perspective: 1400px;
+    -webkit-perspective: 1400px;
   }
   @media (min-width:701px){ #opening{ top:28px; bottom:28px; height:auto; border-radius:6px; overflow:hidden; } }
 
-  #opening .frame-img{
-    position:absolute; inset:0; width:100%; height:100%; object-fit:cover;
+  .door-reveal-bg{
+    position:absolute; inset:0; width:100%; height:100%; z-index:1;
   }
+  .door-reveal-bg img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+
+  .doors-wrapper{
+    position:absolute; inset:0; width:100%; height:100%; z-index:2;
+    perspective: 1400px;
+    -webkit-perspective: 1400px;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+    pointer-events:none;
+  }
+
+  .door-panel{
+    position:absolute; top:0; bottom:0; width:50%;
+    overflow:hidden;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: transform 2.2s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.6s ease 1.7s;
+    -webkit-transition: -webkit-transform 2.2s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.6s ease 1.7s;
+  }
+
+  .door-left{
+    left:0;
+    transform-origin: left center;
+    -webkit-transform-origin: left center;
+  }
+  .door-right{
+    right:0;
+    transform-origin: right center;
+    -webkit-transform-origin: right center;
+  }
+
+  .door-left .door-inner{
+    position:absolute; top:0; left:0; width:200%; height:100%;
+  }
+  .door-right .door-inner{
+    position:absolute; top:0; right:0; width:200%; height:100%;
+  }
+  .door-inner img{
+    width:100%; height:100%; object-fit:cover; display:block;
+  }
+
+  .door-left::after{
+    content:''; position:absolute; top:0; right:0; bottom:0; width:8px;
+    background:linear-gradient(to left, rgba(0,0,0,0.5), transparent);
+    pointer-events:none;
+  }
+  .door-right::after{
+    content:''; position:absolute; top:0; left:0; bottom:0; width:8px;
+    background:linear-gradient(to right, rgba(0,0,0,0.5), transparent);
+    pointer-events:none;
+  }
+
+  .doors-wrapper.opened .door-left{
+    transform: perspective(1400px) rotateY(-108deg);
+    -webkit-transform: perspective(1400px) rotateY(-108deg);
+    opacity: 0;
+  }
+  .doors-wrapper.opened .door-right{
+    transform: perspective(1400px) rotateY(108deg);
+    -webkit-transform: perspective(1400px) rotateY(108deg);
+    opacity: 0;
+  }
+
+  .opening-content{
+    position:absolute; inset:0; z-index:3;
+    transition: opacity 0.6s ease;
+  }
+  .opening-content.fade-out{
+    opacity:0; pointer-events:none;
+  }
+
   #opening .veil{
     position:absolute; inset:0;
     background: linear-gradient(to bottom, rgba(10,5,2,.05) 0%, rgba(10,5,2,0) 40%, rgba(10,5,2,.55) 100%);
@@ -182,14 +258,6 @@
   .ar-names .ar-name.latin{
     font-family:var(--script); font-weight:700; font-size:70px; line-height:1.05; letter-spacing:1px;
   }
-
-  /* ---------- VIDEO ---------- */
-  #videoStage{
-    position:fixed; inset:0; z-index:50; max-width:480px; margin:0 auto;
-    background:#100603; display:none;
-  }
-  @media (min-width:701px){ #videoStage{ top:28px; bottom:28px; height:auto; border-radius:6px; overflow:hidden; } }
-  #doorVideo{ width:100%; height:100%; object-fit:cover; display:block; }
 
   /* ---------- SECTION shared ---------- */
   .page{
@@ -501,22 +569,6 @@
   #scratchCanvas{ position:absolute; inset:0; width:100%; height:100%; touch-action:none; cursor:grab; }
   .scratch-hint{ margin-top:16px; font-size:11px; letter-spacing:2px; text-transform:uppercase; color:var(--cream-dim); opacity:.85; }
 
-  /* ===== balloons ===== */
-  #balloonField{ position:relative; width:100%; height:420px; overflow:hidden; }
-  .balloon{
-    position:absolute; bottom:-140px; width:58px; height:72px; cursor:pointer;
-    animation: floatUp linear forwards;
-  }
-  .balloon .body{
-    width:100%; height:100%; border-radius:50% 50% 48% 48%;
-    box-shadow: inset -10px -12px 18px rgba(0,0,0,.25), inset 8px 10px 16px rgba(255,255,255,.25), 0 8px 16px rgba(0,0,0,.2);
-    position:relative;
-  }
-  .balloon .string{ position:absolute; left:50%; bottom:-30px; width:1px; height:30px; background:rgba(230,205,143,.5); }
-  .balloon.pop{ animation:none; }
-  @keyframes floatUp{ to{ transform: translateY(-560px); } }
-  .burst{ position:absolute; border-radius:50%; pointer-events:none; }
-
   /* ===== family ===== */
   .fam-block{ margin-bottom:30px; }
   .fam-side{ font-family:var(--body); font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--gold-dim); margin-bottom:8px; font-weight:600; }
@@ -553,24 +605,40 @@
   <audio id="bgSong" src="assets/song.mp3" loop preload="auto"></audio>
   <button class="mute-btn" id="muteBtn" type="button" aria-label="Mute music">&#9835;</button>
 
-  <!-- OPENING -->
+  <!-- OPENING & 3D DOORS -->
   <section id="opening" aria-label="Opening">
-    <img class="frame-img" src="assets/poster.jpg" alt="Ornate closed wooden doors flanked by brass lanterns">
-    <div class="veil"></div>
-    <div class="ar-welcome">السلام عليكم ورحمة الله وبركاته</div>
-    <div class="ar-names"><br><br><br>
-      <p class="ar-name">رنشاد</p>
-      <div class="ar-divider"><i></i></div>
-      <p class="ar-name">منوّرة</p>
+    <!-- Underneath: Revealed hero image with Rinshad & Munavvira -->
+    <div class="door-reveal-bg">
+      <img src="assets/hero.png" alt="Rinshad & Munavvira Wedding Invitation">
     </div>
-    <div class="open-cta-wrap">
-      <button class="open-cta" id="openBtn" type="button">Open Invitation</button>
-    </div>
-  </section>
 
-  <!-- VIDEO -->
-  <section id="videoStage" aria-label="Doors opening">
-    <video id="doorVideo" src="assets/opening.mp4" poster="assets/poster.jpg" playsinline preload="auto"></video>
+    <!-- 3D Double Doors -->
+    <div class="doors-wrapper" id="doorsWrapper">
+      <div class="door-panel door-left">
+        <div class="door-inner">
+          <img src="assets/poster.jpg" alt="">
+        </div>
+      </div>
+      <div class="door-panel door-right">
+        <div class="door-inner">
+          <img src="assets/poster.jpg" alt="">
+        </div>
+      </div>
+    </div>
+
+    <!-- Greeting & CTA overlay -->
+    <div class="opening-content" id="openingContent">
+      <div class="veil"></div>
+      <div class="ar-welcome">السلام عليكم ورحمة الله وبركاته</div>
+      <div class="ar-names"><br><br><br>
+        <p class="ar-name">رنشاد</p>
+        <div class="ar-divider"><i></i></div>
+        <p class="ar-name">منوّرة</p>
+      </div>
+      <div class="open-cta-wrap">
+        <button class="open-cta" id="openBtn" type="button">Open Invitation</button>
+      </div>
+    </div>
   </section>
 
   <!-- MAIN STORY -->
@@ -749,15 +817,6 @@
       </div>
     </section>
 
-    <!-- PAGE 08 — BALLOON POP -->
-    <section class="page" style="background:linear-gradient(180deg, var(--cream), var(--cream-dim)); padding-top:70px;">
-      <p class="label">Celebrate With Us</p>
-      <div class="divider"><i></i></div>
-      <!-- Couple photo: set COUPLE_IMAGE in the script below (e.g. 'assets/couple.png') to show it here -->
-      <figure class="couple-frame" id="coupleFrame" hidden><img id="coupleImg" alt="Rinshad and Munavvira" decoding="async"></figure>
-      <div id="balloonField"></div>
-    </section>
-
     <!-- PAGE 10 — COMPLIMENTS -->
     <section class="page" style="background:linear-gradient(180deg, var(--wood), #1b0f07);">
       <div class="reveal">
@@ -844,8 +903,6 @@ const WEDDING_START = '2026-12-27T18:00:00+05:30';
 (function(){
   const body = document.body;
   const opening = document.getElementById('opening');
-  const videoStage = document.getElementById('videoStage');
-  const video = document.getElementById('doorVideo');
   const openBtn = document.getElementById('openBtn');
   const story = document.getElementById('story');
   const bgSong = document.getElementById('bgSong');
@@ -879,8 +936,7 @@ const WEDDING_START = '2026-12-27T18:00:00+05:30';
 
   let entered = false;
   function enterStory(){
-    videoStage.style.display = 'none';
-    opening.style.display = 'none';
+    if(opening) opening.style.display = 'none';
     if(entered) return; entered = true;
     story.hidden = false;
     body.classList.remove('locked');
@@ -895,17 +951,15 @@ const WEDDING_START = '2026-12-27T18:00:00+05:30';
   let opened = false;
   openBtn.addEventListener('click', function(){
     if(opened) return; opened = true;
-    opening.style.display = 'none';
-    videoStage.style.display = 'block';
-    video.currentTime = 0;
     playSong();
-    if(video.error){ enterStory(); return; }
-    const p = video.play();
-    if(p && p.catch){ p.catch(function(){ enterStory(); }); }
+    const openingContent = document.getElementById('openingContent');
+    const doorsWrapper = document.getElementById('doorsWrapper');
+    if(openingContent) openingContent.classList.add('fade-out');
+    if(doorsWrapper) doorsWrapper.classList.add('opened');
+    setTimeout(function(){
+      enterStory();
+    }, 2200);
   });
-
-  video.addEventListener('ended', enterStory);
-  video.addEventListener('error', function(){ if(opened) enterStory(); });
 
   /* ---------- map link ---------- */
   (function(){
@@ -1104,85 +1158,6 @@ const WEDDING_START = '2026-12-27T18:00:00+05:30';
   canvas.addEventListener('touchstart', start, {passive:false});
   canvas.addEventListener('touchmove', move, {passive:false});
   canvas.addEventListener('touchend', end);
-
-  /* ---------- balloons ---------- */
-  const field = document.getElementById('balloonField');
-  const palette = ['#5c1220', '#c6a15b', '#efe4cc', '#4a2c17'];
-  let audioCtx;
-  function pop(){
-    try{
-      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.type='sine'; o.frequency.setValueAtTime(520, audioCtx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + .14);
-      g.gain.setValueAtTime(.16, audioCtx.currentTime);
-      g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + .16);
-      o.connect(g); g.connect(audioCtx.destination);
-      o.start(); o.stop(audioCtx.currentTime + .17);
-    }catch(e){}
-  }
-  function spawnBalloon(){
-    if(!field.isConnected) return;
-    const b = document.createElement('div');
-    b.className = 'balloon';
-    const color = palette[Math.floor(Math.random()*palette.length)];
-    const left = 8 + Math.random()*76;
-    const dur = 9 + Math.random()*5;
-    b.style.left = left + '%';
-    b.style.animationDuration = dur + 's';
-    b.innerHTML = '<div class="string"></div><div class="body" style="background:radial-gradient(circle at 32% 28%, rgba(255,255,255,.55), '+color+' 55%, '+shade(color)+' 100%);"></div>';
-    field.appendChild(b);
-    const timer = setTimeout(function(){ if(b.isConnected) b.remove(); }, dur*1000);
-    b.addEventListener('click', function(){
-      clearTimeout(timer);
-      burst(b);
-      pop();
-      b.remove();
-    });
-  }
-  function shade(hex){
-    const n = parseInt(hex.slice(1),16);
-    let r=(n>>16)-40, g=((n>>8)&255)-40, bl=(n&255)-40;
-    r=Math.max(0,r); g=Math.max(0,g); bl=Math.max(0,bl);
-    return 'rgb('+r+','+g+','+bl+')';
-  }
-  function burst(b){
-    const rect = b.getBoundingClientRect();
-    const fieldRect = field.getBoundingClientRect();
-    const cx = rect.left - fieldRect.left + rect.width/2;
-    const cy = rect.top - fieldRect.top + rect.height/2;
-    for(let i=0;i<10;i++){
-      const p = document.createElement('div');
-      p.className = 'burst';
-      const size = 4 + Math.random()*4;
-      p.style.width = size+'px'; p.style.height = size+'px';
-      p.style.left = cx+'px'; p.style.top = cy+'px';
-      p.style.background = palette[Math.floor(Math.random()*palette.length)];
-      const angle = Math.random()*Math.PI*2;
-      const dist = 24 + Math.random()*34;
-      p.style.transition = 'transform .6s ease-out, opacity .6s ease-out';
-      field.appendChild(p);
-      requestAnimationFrame(function(){
-        p.style.transform = 'translate('+(Math.cos(angle)*dist)+'px,'+(Math.sin(angle)*dist)+'px)';
-        p.style.opacity = '0';
-      });
-      setTimeout(function(){ p.remove(); }, 650);
-    }
-  }
-  let balloonInterval;
-  const balloonSection = field.closest('section');
-  const bIo = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){
-        for(let i=0;i<5;i++){ setTimeout(spawnBalloon, i*500); }
-        balloonInterval = setInterval(spawnBalloon, 1800);
-      } else {
-        clearInterval(balloonInterval);
-      }
-    });
-  }, {threshold:.3});
-  bIo.observe(balloonSection);
 
 })();
 </script>
